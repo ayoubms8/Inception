@@ -1,0 +1,71 @@
+version: '3.8'
+services:
+  db:
+    image: mariadb:alemsafi
+    container_name: mariadb
+    build:
+      context: ./requirements/Mariadb
+      dockerfile: Dockerfile
+    expose:
+      - 3306
+    env_file:
+      - .env
+    volumes:
+      - mariadb:/var/lib/mysql
+    networks:
+      - wp-network
+    init: true
+
+  wordpress:
+    image: wordpress:alemsafi
+    container_name: wordpress
+    depends_on:
+      - db
+    build:
+      context: ./requirements/Wordpress
+      dockerfile: Dockerfile
+    expose:
+      - 9000
+    env_file:
+      - .env
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - wp-network
+  
+  nginx:
+    image: nginx:alemsafi
+    container_name: nginx
+    build:
+      context: ./requirements/Nginx
+      dockerfile: Dockerfile
+    ports:
+      - 443:443
+    env_file:
+      - .env
+    volumes:
+      - wordpress:/var/www/html
+    depends_on:
+      - wordpress
+    networks:
+      - wp-network
+
+networks:
+  wp-network:
+    driver: bridge
+
+volumes:
+  wordpress:
+    name: wordpress
+    driver: local
+    driver_opts:
+      device: /home/alemsafi/data/wordpress
+      o: bind
+      type: none
+  mariadb:
+    name: mariadb
+    driver: local
+    driver_opts:
+      device: /home/alemsafi/data/mariadb
+      o: bind
+      type: none
